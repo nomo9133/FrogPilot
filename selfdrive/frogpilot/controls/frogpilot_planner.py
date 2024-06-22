@@ -18,6 +18,7 @@ from openpilot.selfdrive.frogpilot.controls.lib.conditional_experimental_mode im
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import MovingAverageCalculator, calculate_lane_width, calculate_road_curvature
 from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_variables import CITY_SPEED_LIMIT, CRUISING_SPEED, PROBABILITY, TRAJECTORY_SIZE
 from openpilot.selfdrive.frogpilot.controls.lib.map_turn_speed_controller import MapTurnSpeedController
+from openpilot.selfdrive.frogpilot.controls.lib.speed_limit_controller import SpeedLimitController
 
 A_CRUISE_MIN_ECO = A_CRUISE_MIN / 5
 A_CRUISE_MIN_SPORT = A_CRUISE_MIN / 2
@@ -52,6 +53,7 @@ class FrogPilotPlanner:
     self.model_length = 0
     self.mtsc_target = 0
     self.road_curvature = 0
+    self.slc_target = 0
     self.speed_jerk = 0
     self.tracked_model_length = 0
     self.v_cruise = 0
@@ -214,6 +216,13 @@ class FrogPilotPlanner:
     else:
       self.mtsc_target = v_cruise if v_cruise != V_CRUISE_UNSET else 0
 
+    # Pfeiferj's Speed Limit Controller
+    if frogpilot_toggles.speed_limit_controller:
+      SpeedLimitController.update(frogpilotNavigation.navigationSpeedLimit, v_ego, frogpilot_toggles)
+      self.slc_target = SpeedLimitController.desired_speed_limit
+    else:
+      self.slc_target = 0
+
     if frogpilot_toggles.force_standstill and v_ego < 1 and not self.override_force_stop:
       if carState.gasPressed:
         self.override_force_stop = True
@@ -236,7 +245,7 @@ class FrogPilotPlanner:
       self.override_force_stop = False
       self.tracked_model_length = 0
 
-      targets = [self.mtsc_target]
+      targets = [self.mtsc_target, self.slc_target - v_ego_diff]
       self.v_cruise = float(min([target if target > CRUISING_SPEED else v_cruise for target in targets]))
 
   def publish(self, sm, pm, frogpilot_toggles):
@@ -260,6 +269,9 @@ class FrogPilotPlanner:
 
     frogpilotPlan.maxAcceleration = float(self.max_accel)
     frogpilotPlan.minAcceleration = float(self.min_accel)
+
+    frogpilotPlan.slcSpeedLimit = self.slc_target
+    frogpilotPlan.slcSpeedLimitOffset = SpeedLimitController.offset
 
     frogpilotPlan.vCruise = self.v_cruise
 
