@@ -1,6 +1,7 @@
 """Install exception handler for process crash."""
 import os
 import sentry_sdk
+import subprocess
 import time
 import traceback
 
@@ -20,13 +21,33 @@ CRASHES_DIR = "/data/crashes/"
 
 class SentryProject(Enum):
   # python project
-  SELFDRIVE = "https://5ad1714d27324c74a30f9c538bff3b8d@o4505034923769856.ingest.sentry.io/4505034930651136"
+  SELFDRIVE = "https://b42f6e8bea596ec3d7dc1d9a80280027@o4507524429185024.ingest.us.sentry.io/4507524452057088"
   # native project
-  SELFDRIVE_NATIVE = "https://5ad1714d27324c74a30f9c538bff3b8d@o4505034923769856.ingest.sentry.io/4505034930651136"
+  SELFDRIVE_NATIVE = "https://b42f6e8bea596ec3d7dc1d9a80280027@o4507524429185024.ingest.us.sentry.io/4507524452057088"
 
 
 def bind_user() -> None:
   sentry_sdk.set_user({"id": HARDWARE.get_serial()})
+
+
+def capture_tmux() -> None:
+  try:
+    result = subprocess.run(['tmux', 'capture-pane', '-p', '-S', '-250'], stdout=subprocess.PIPE)
+    lines = result.stdout.decode('utf-8').splitlines()
+
+    if lines:
+      while True:
+        if is_url_pingable("https://sentry.io"):
+          with sentry_sdk.configure_scope() as scope:
+            bind_user()
+            scope.set_extra("tmux_log", "\n".join(lines))
+            sentry_sdk.capture_message("User's UI crashed", level='error')
+            sentry_sdk.flush()
+          break
+        time.sleep(60)
+
+  except Exception:
+    cloudlog.exception("Failed to capture tmux log")
 
 
 def report_tombstone(fn: str, message: str, contents: str) -> None:
@@ -187,7 +208,7 @@ def init(project: SentryProject) -> bool:
                   release=get_version(),
                   integrations=integrations,
                   traces_sample_rate=1.0,
-                  max_value_length=8192,
+                  max_value_length=98304,
                   environment=env)
 
   build_metadata = get_build_metadata()
