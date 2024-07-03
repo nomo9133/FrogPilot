@@ -1,10 +1,14 @@
 import datetime
 import filecmp
 import glob
+import http.client
 import numpy as np
 import os
 import shutil
+import socket
 import subprocess
+import urllib.error
+import urllib.request
 
 from openpilot.common.basedir import BASEDIR
 from openpilot.common.params_pyx import Params, UnknownKeyName
@@ -33,6 +37,13 @@ def calculate_road_curvature(modelData, v_ego):
   velocity = np.array(modelData.velocity.x)
   max_pred_lat_acc = np.amax(orientation_rate * velocity)
   return max_pred_lat_acc / (v_ego**2)
+
+def is_url_pingable(url, timeout=5):
+  try:
+    urllib.request.urlopen(url, timeout=timeout)
+    return True
+  except (urllib.error.URLError, socket.timeout, http.client.RemoteDisconnected):
+    return False
 
 def run_cmd(cmd, success_msg, fail_msg):
   try:
