@@ -1,3 +1,5 @@
+import os
+
 from types import SimpleNamespace
 
 from cereal import car
@@ -6,6 +8,9 @@ from openpilot.common.params import Params
 from openpilot.selfdrive.controls.lib.desire_helper import LANE_CHANGE_SPEED_MIN
 from openpilot.selfdrive.modeld.constants import ModelConstants
 from openpilot.system.version import get_build_metadata
+
+from openpilot.selfdrive.frogpilot.controls.lib.frogpilot_functions import MODELS_PATH
+from openpilot.selfdrive.frogpilot.controls.lib.model_manager import DEFAULT_MODEL, NAVIGATION_MODELS, RADARLESS_MODELS
 
 CITY_SPEED_LIMIT = 25                   # 55mph is typically the minimum speed for highways
 CRUISING_SPEED = 5                      # Roughly the speed cars go when not touching the gas while in drive
@@ -56,6 +61,17 @@ class FrogPilotVariables:
     toggle.is_metric = self.params.get_bool("IsMetric")
     distance_conversion = 1. if toggle.is_metric else CV.FOOT_TO_METER
     speed_conversion = CV.KPH_TO_MS if toggle.is_metric else CV.MPH_TO_MS
+
+    if not started:
+      toggle.model_selector = self.params.get_bool("ModelSelector")
+      toggle.model = self.params.get("Model", block=openpilot_installed, encoding='utf-8') if toggle.model_selector else DEFAULT_MODEL
+      if not os.path.exists(os.path.join(MODELS_PATH, f"{toggle.model}.thneed")):
+        toggle.model = DEFAULT_MODEL
+      toggle.navigationless_model = toggle.model not in NAVIGATION_MODELS
+      toggle.radarless_model = not self.release and toggle.model in RADARLESS_MODELS
+      toggle.secretgoodopenpilot_model = not self.release and toggle.model == "secret-good-openpilot"
+      if self.release and toggle.model in {RADARLESS_MODELS, "secret_good_openpilot"}:
+        toggle.model = DEFAULT_MODEL
 
     toggle.alert_volume_control = self.params.get_bool("AlertVolumeControl")
     toggle.disengage_volume = self.params.get_int("DisengageVolume") if toggle.alert_volume_control else 100
