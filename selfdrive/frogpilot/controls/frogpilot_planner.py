@@ -42,6 +42,7 @@ class FrogPilotPlanner:
     self.lead_one = Lead()
     self.mtsc = MapTurnSpeedController()
 
+    self.forcing_stop = False
     self.override_force_stop = False
     self.slower_lead = False
     self.tracking_lead = False
@@ -52,6 +53,7 @@ class FrogPilotPlanner:
     self.mtsc_target = 0
     self.road_curvature = 0
     self.speed_jerk = 0
+    self.tracked_model_length = 0
     self.v_cruise = 0
 
     self.tracking_lead_mac = MovingAverageCalculator()
@@ -75,8 +77,8 @@ class FrogPilotPlanner:
     lead_distance = self.lead_one.dRel - distance_offset
     stopping_distance = STOP_DISTANCE + distance_offset
 
-    if frogpilot_toggles.conditional_experimental_mode and controlsState.enabled:
-      self.cem.update(carState, frogpilotNavigation, modelData, self.model_length, self.road_curvature, self.slower_lead, self.tracking_lead, v_ego, v_lead, frogpilot_toggles)
+    if (frogpilot_toggles.conditional_experimental_mode or frogpilot_toggles.force_stops) and controlsState.enabled:
+      self.cem.update(carState, self.forcing_stop, frogpilotNavigation, modelData, self.model_length, self.road_curvature, self.slower_lead, self.tracking_lead, v_ego, v_lead, frogpilot_toggles)
 
     check_lane_width = frogpilot_toggles.lane_detection
     if check_lane_width and v_ego >= frogpilot_toggles.minimum_lane_change_speed:
@@ -203,8 +205,21 @@ class FrogPilotPlanner:
       else:
         self.v_cruise = -1
 
+    elif frogpilot_toggles.force_stops and self.cem.stop_light_detected and not self.override_force_stop:
+      if carState.gasPressed:
+        self.override_force_stop = True
+      else:
+        if self.tracked_model_length == 0:
+          self.tracked_model_length = self.model_length
+
+        self.forcing_stop = True
+        self.tracked_model_length -= v_ego * DT_MDL
+        self.v_cruise = min(self.tracked_model_length / ModelConstants.T_IDXS[TRAJECTORY_SIZE - 1], v_cruise)
+
     else:
-      self.override_force_stop = True
+      self.forcing_stop = False
+      self.override_force_stop = False
+      self.tracked_model_length = 0
 
       targets = [self.mtsc_target]
       self.v_cruise = float(min([target if target > CRUISING_SPEED else v_cruise for target in targets]))
