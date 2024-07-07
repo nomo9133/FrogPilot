@@ -116,7 +116,7 @@ class FrogPilotPlanner:
 
     self.set_acceleration(controlsState, frogpilotCarState, v_cruise, v_ego, frogpilot_toggles)
     self.set_follow_values(controlsState, frogpilotCarState, lead_distance, stopping_distance, v_ego, v_lead, frogpilot_toggles)
-    self.set_lead_status(carState, lead_distance)
+    self.set_lead_status(carState, lead_distance, stopping_distance)
     self.update_v_cruise(carState, controlsState, frogpilotCarState, frogpilotNavigation, modelData, v_cruise, v_ego, frogpilot_toggles)
 
   def set_acceleration(self, controlsState, frogpilotCarState, v_cruise, v_ego, frogpilot_toggles):
@@ -194,8 +194,8 @@ class FrogPilotPlanner:
       self.danger_jerk = self.base_danger_jerk
       self.speed_jerk = self.base_speed_jerk
 
-  def set_lead_status(self, carState, lead_distance):
-    following_lead = self.lead_one.status and lead_distance < self.model_length + TRAJECTORY_SIZE
+  def set_lead_status(self, carState, lead_distance, stopping_distance):
+    following_lead = self.lead_one.status and lead_distance < max(self.model_length, stopping_distance) + TRAJECTORY_SIZE
     following_lead &= not carState.standstill or self.tracking_lead
 
     self.tracking_lead_mac.add_data(following_lead)
