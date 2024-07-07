@@ -295,7 +295,7 @@ class FrogPilotPlanner:
         self.forcing_stop = True
         self.v_cruise = -1
 
-    elif frogpilot_toggles.force_stops and self.cem.stop_light_detected and not self.override_force_stop:
+    elif frogpilot_toggles.force_stops and self.cem.stop_light_detected and not self.override_force_stop and controlsState.enabled:
       if carState.gasPressed:
         self.override_force_stop = True
       else:
