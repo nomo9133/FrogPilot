@@ -457,6 +457,7 @@ class FrogPilotVariables:
         always_on_lateral_set = bool(CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.ALWAYS_ON_LATERAL)
         car_make = CP.carName
         car_model = CP.carFingerprint
+        toggle.CSLC = params.get_bool("CSLCEnabled")
         friction = CP.lateralTuning.torque.friction if is_torque_car else 0.0
         has_auto_tune = car_make in {"hyundai", "toyota"} and CP.lateralTuning.which() == "torque"
         has_bsm = CP.enableBsm
@@ -467,7 +468,7 @@ class FrogPilotVariables:
         latAccelFactor = CP.lateralTuning.torque.latAccelFactor if is_torque_car else 10.0
         max_acceleration_enabled = bool(CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.RAISE_LONGITUDINAL_LIMITS_TO_ISO_MAX)
         openpilot_longitudinal = CP.openpilotLongitudinalControl
-        pcm_cruise = CP.pcmCruise
+        pcm_cruise = CP.pcmCruise and not toggle.CSLC
         steerActuatorDelay = CP.steerActuatorDelay
         steerKp = CP.lateralTuning.torque.kp if is_torque_car else 1.0
         steerRatio = CP.steerRatio
@@ -480,6 +481,7 @@ class FrogPilotVariables:
       always_on_lateral_set = False
       car_make = "MOCK"
       car_model = "MOCK"
+      toggle.CSLC = False
       friction = 0.0
       has_auto_tune = False
       has_bsm = False

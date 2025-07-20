@@ -23,7 +23,7 @@ class CarController(CarControllerBase):
     # FrogPilot variables
     self.FPCP = FPCP
 
-  def update(self, CC, CS, now_nanos, frogpilot_toggles):
+  def update(self, CC, CS, now_nanos, experimental_mode, v_cruise, frogpilot_toggles):
     can_sends = []
 
     lkas_active = CC.latActive and self.lkas_control_bit_prev
