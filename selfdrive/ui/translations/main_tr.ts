@@ -3366,6 +3366,16 @@ Kendi animasyonlarınızı göndermek mi istiyorsunuz? Onları FrogPilot Discord
         <source> seconds</source>
         <translation type="gpt-4o-generated">saniye</translation>
     </message>
+    <message>
+        <source>GM CSLC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set cars cruise speed based on SLC, MTSC, VTSC, &amp; CEM.
+
+Turns OpenPilot Longitudnal Control off for camera ACC cars.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FrogPilotVisualsPanel</name>
