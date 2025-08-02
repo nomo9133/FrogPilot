@@ -98,6 +98,7 @@ class CarInterface(CarInterfaceBase):
     ret.vEgoStopping = 0.5
     ret.autoResumeSng = ret.minEnableSpeed == -1
 
+    ret.flags |= VolkswagenFlags.A0SnG.value
     return ret
 
   # returns a car.CarState
