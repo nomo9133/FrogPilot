@@ -16,6 +16,7 @@ from openpilot.selfdrive.controls.lib.pid import PIDController
 from opendbc.can.packer import CANPacker
 
 from openpilot.selfdrive.car.interfaces import get_max_allowed_accel
+from openpilot.common.conversions import Conversions as CV
 
 GearShifter = car.CarState.GearShifter
 LongCtrlState = car.CarControl.Actuators.LongControlState
@@ -358,7 +359,7 @@ class CarController(CarControllerBase):
     new_actuators.accel = self.accel
 
     # FrogPilot Toyota carcontroller functions
-    if not self.doors_locked and CS.out.gearShifter != PARK:
+    if not self.doors_locked and CS.out.gearShifter != PARK and CS.out.vEgo * CV.MS_TO_KPH > 10:
       if frogpilot_toggles.lock_doors:
         can_sends.append(make_can_msg(0x750, LOCK_CMD, 0))
       self.doors_locked = True
