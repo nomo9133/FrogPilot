@@ -83,3 +83,9 @@ build/
 
 poetry.toml
 Pipfile
+
+gemini.md
+save_staging_snapshot.sh
+save_testing_snapshot.sh
+update_frogpilot-staging.sh
+update_frogpilot-testing.sh
