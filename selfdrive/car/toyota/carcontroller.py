@@ -14,6 +14,7 @@ from openpilot.selfdrive.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_
                                         UNSUPPORTED_DSU_CAR, STOP_AND_GO_CAR
 from openpilot.selfdrive.controls.lib.pid import PIDController
 from opendbc.can.packer import CANPacker
+from openpilot.common.conversions import Conversions as CV
 
 GearShifter = car.CarState.GearShifter
 LongCtrlState = car.CarControl.Actuators.LongControlState
@@ -360,7 +361,7 @@ class CarController(CarControllerBase):
     new_actuators.accel = float(self.accel)
 
     # FrogPilot Toyota carcontroller functions
-    if not self.doors_locked and CS.out.gearShifter != PARK:
+    if not self.doors_locked and CS.out.gearShifter != PARK and CS.out.vEgo * CV.MS_TO_KPH > 10:
       if frogpilot_toggles.lock_doors:
         can_sends.append(make_can_msg(0x750, LOCK_CMD, 0))
       self.doors_locked = True
